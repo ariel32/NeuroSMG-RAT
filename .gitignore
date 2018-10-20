@@ -1,0 +1,10 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Files/**
+RAT.b4a.meta
+Starter.bas
+icon.jpg
+Objects/**
+!Objects/RAT.apk
