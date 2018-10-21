@@ -41,12 +41,14 @@ Sub Globals
 	Dim bColor As Int
 	Dim m, n, ln As Int
 	Dim l As String
+	Dim mark As String
 	Dim bank As Double
 	Dim iter As Int
 	Dim citer As Int
 	Dim lastBallonCost As Double
 	Dim saved As Boolean
 	Dim name As String
+	Dim duration, t As Long
 	Dim session As Long
 	Dim lastBallon As Int
 	Dim NEnd As Int
@@ -68,7 +70,7 @@ Sub Activity_Create(FirstTime As Boolean)
 	m = 8
 	n = Rnd(1,m-1)
 	ln = 1
-	bank = 10
+	bank = 0
 	iter = 0
 	lastBallon = 0
 	saved = False
@@ -103,10 +105,14 @@ End Sub
 Sub Activity_Touch(Action As Int, tx As Float, ty As Float)
 	Select Action
 		Case Activity.ACTION_DOWN
+			t = DateTime.Now
+		Case Activity.ACTION_UP
 			If EditTextName.Text = "Введите имя:" Or EditTextName.Text = "" Then
 				ToastMessageShow ("Введите имя!", False)
 			End If
 			time = DateTime.Now
+			duration = time-t
+			mark = "pump"
 			Pump
 	End Select
 End Sub
@@ -132,7 +138,7 @@ Sub Pump
 			n = n + 1
 			citer = citer + 1
 		End If
-	
+		
 		If n = m + 1 Or saved = True Then
 			start = True
 			r = 10
@@ -163,11 +169,13 @@ Sub Pump
 				LabelLastBallon.Text = "Последний шар: $"&lastBallonCost
 				bank = Round2(bank + lastBallonCost, 2)
 				LabelBank.Text = "Банк: $"&bank
+				mark = "save"
 			Else
 				ToastMessageShow ("Вуууп-вууп, шарик лопнул", False)
 				LabelLastBallon.Text =  "Последний шар: $0"
+				mark = "exploded"
 			End If
-			
+
 			citer = 0
 			
 			CanvasRes.DrawColor(Colors.Black)
@@ -177,10 +185,9 @@ Sub Pump
 			saved = False
 		End If
 		name = EditTextName.text
-		Log(time)
-		l = "session: "&session&", time: "&time&", name: "&name&", m: "&m&", n: "&n&", r: "&r&", Шар: "&ln&", Iter: "&iter&", Citer: "&citer&", bank: "&bank
+		l = "m: "&m&", n: "&n&", r: "&r&", Шар: "&ln&", Iter: "&iter&", Citer: "&citer&", bank: "&bank&", mark: "&mark&", duration: "&duration
 		Log(l)
-		result.Add(session&";"&time&";"&name&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&bank)
+		result.Add(session&";"&time&";"&name&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&duration&";"&mark&";"&bank)
 		'LabelInfo.Text = l
 		CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
 		Activity.Invalidate3(x0 - 7dip, y0 - 7dip, x0 + 7dip, y0 + 7dip)
@@ -250,6 +257,8 @@ End Sub
 
 Sub ButtonSave_click
 	saved = True
+	mark = "save"
+	duration = 0
 	Pump
 End Sub
 
