@@ -198,7 +198,9 @@ Sub Pump
 			name = ""
 			EditTextName.Text = "Введите имя:" : EditTextName.Enabled = True
 			session = 0
-			bank = 10
+			bank = 0
+			iter = 0
+			citer = 0
 			ButtonSave.Enabled = False
 			LabelN.Text = "Шар: 1"
 			Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/result.csv",True))
