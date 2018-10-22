@@ -62,7 +62,7 @@ End Sub
 
 Sub Activity_Create(FirstTime As Boolean)
 	Dim p As Phone
-	p.SetScreenOrientation(2)
+	p.SetScreenOrientation(0)
 	Activity.LoadLayout("main")
 	CanvasRes.Initialize(Activity)
 	CanvasRes.DrawColor(Colors.Black)
