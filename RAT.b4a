@@ -5,10 +5,11 @@ Group=Default Group
 IconFile=
 Library1=core
 Library2=messharelibrary
+Library3=phone
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
 Module1=Starter
 NumberOfFiles=1
-NumberOfLibraries=2
+NumberOfLibraries=3
 NumberOfModules=1
 Version=7.8
 @EndOfDesignText@
@@ -56,9 +57,12 @@ Sub Globals
 	Dim sharefname As String
 	Dim Writer As TextWriter
 	Dim result As List
+	Dim Vibrate As PhoneVibrate
 End Sub
 
 Sub Activity_Create(FirstTime As Boolean)
+	Dim p As Phone
+	p.SetScreenOrientation(2)
 	Activity.LoadLayout("main")
 	CanvasRes.Initialize(Activity)
 	CanvasRes.DrawColor(Colors.Black)
@@ -172,6 +176,7 @@ Sub Pump
 				mark = "save"
 			Else
 				ToastMessageShow ("Вуууп-вууп, шарик лопнул", False)
+				Vibrate.Vibrate (100)
 				LabelLastBallon.Text =  "Последний шар: $0"
 				mark = "exploded"
 			End If
