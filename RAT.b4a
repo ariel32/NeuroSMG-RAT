@@ -197,13 +197,14 @@ Sub Pump
 		CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
 		Activity.Invalidate3(x0 - 7dip, y0 - 7dip, x0 + 7dip, y0 + 7dip)
 		
-		If ln = NEnd Then
+		If ln = NEnd+1 Then
 			Msgbox("Исследование окончено, спасибо!","")
 			ln = 0
 			name = ""
 			EditTextName.Text = "Введите имя:" : EditTextName.Enabled = True
 			session = 0
 			bank = 0
+			LabelBank.Text = "Банк: $"&bank
 			iter = 0
 			citer = 0
 			ButtonSave.Enabled = False
