@@ -206,6 +206,7 @@ Sub Pump
 				MsgboxAsync("Попытка №"&E,"")
 			Else if E = 3 Then
 				Msgbox("Исследование окончено, спасибо!","")
+				E = 0
 				name = ""
 				EditTextName.Text = "Введите имя:" : EditTextName.Enabled = True
 				session = 0
