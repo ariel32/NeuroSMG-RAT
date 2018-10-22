@@ -40,7 +40,7 @@ Sub Globals
 	Dim r As Float
 	Dim CanvasRes As Canvas
 	Dim bColor As Int
-	Dim m, n, ln As Int
+	Dim E, m, n, ln As Int
 	Dim l As String
 	Dim mark As String
 	Dim bank As Double
@@ -71,6 +71,7 @@ Sub Activity_Create(FirstTime As Boolean)
 	start = True
 	bColor = Colors.Red
 	r = 10
+	E = 0
 	m = 8
 	n = Rnd(1,m-1)
 	ln = 1
@@ -113,11 +114,12 @@ Sub Activity_Touch(Action As Int, tx As Float, ty As Float)
 		Case Activity.ACTION_UP
 			If EditTextName.Text = "Введите имя:" Or EditTextName.Text = "" Then
 				ToastMessageShow ("Введите имя!", False)
+			Else 
+				time = DateTime.Now
+				duration = time-t
+				mark = "pump"
+				Pump
 			End If
-			time = DateTime.Now
-			duration = time-t
-			mark = "pump"
-			Pump
 	End Select
 End Sub
 
@@ -175,7 +177,7 @@ Sub Pump
 				LabelBank.Text = "Банк: $"&bank
 				mark = "save"
 			Else
-				ToastMessageShow ("Вуууп-вууп, шарик лопнул", False)
+				ToastMessageShow ("Ой, шарик лопнул...", False)
 				Vibrate.Vibrate (100)
 				LabelLastBallon.Text =  "Последний шар: $0"
 				mark = "exploded"
@@ -185,38 +187,44 @@ Sub Pump
 			
 			CanvasRes.DrawColor(Colors.Black)
 			CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
+			
 			ln = ln + 1
 			LabelN.Text = "Шар: "&ln
 			saved = False
 		End If
 		name = EditTextName.text
-		l = "m: "&m&", n: "&n&", r: "&r&", Шар: "&ln&", Iter: "&iter&", Citer: "&citer&", bank: "&bank&", mark: "&mark&", duration: "&duration
+		l = "m: "&m&", n: "&n&", r: "&r&", Шар: "&ln&", Iter: "&iter&", Citer: "&citer&", bank: "&bank&", mark: "&mark&", E: "&E
 		Log(l)
-		result.Add(session&";"&time&";"&name&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&duration&";"&mark&";"&bank)
+		result.Add(session&";"&time&";"&name&";"&E&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&duration&";"&mark&";"&bank)
 		'LabelInfo.Text = l
 		CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
 		Activity.Invalidate3(x0 - 7dip, y0 - 7dip, x0 + 7dip, y0 + 7dip)
 		
 		If ln = NEnd+1 Then
-			Msgbox("Исследование окончено, спасибо!","")
+			If E < 3 Then
+				E = E + 1
+				MsgboxAsync("Попытка №"&E,"")
+			Else if E = 3 Then
+				Msgbox("Исследование окончено, спасибо!","")
+				name = ""
+				EditTextName.Text = "Введите имя:" : EditTextName.Enabled = True
+				session = 0
+				ButtonSave.Enabled = False
+				Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/RAT.csv",True))
+				Writer.WriteList(result)
+				Writer.Close
+				result.Clear
+				ToastMessageShow ("Данные были успешно сохранены в файл " & File.DirRootExternal & "/RAT/RAT.csv", True)
+			End If
+			
+			LabelN.Text = "Шар: 1"
 			ln = 1
-			name = ""
-			EditTextName.Text = "Введите имя:" : EditTextName.Enabled = True
-			session = 0
 			bank = 0
 			LabelBank.Text = "Банк: $"&bank
 			lastBallon = 0
 			LabelLastBallon.Text = "Последний шар: $"&lastBallon
 			iter = 0
 			citer = 0
-			ButtonSave.Enabled = False
-			LabelN.Text = "Шар: 1"
-			Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/RAT.csv",True))
-			Writer.WriteList(result)
-			Writer.Close
-			
-			result.Clear
-			ToastMessageShow ("Данные были успешно сохранены в файл " & File.DirRootExternal & "/RAT/RAT.csv", True)
 			If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
 				ButtonShare.Enabled  = False
 				ButtonClear.Enabled = False
@@ -274,6 +282,10 @@ End Sub
 
 Sub EditTextName_EnterPressed
 	If EditTextName.Text <> "" And EditTextName.Text <> "Введите имя:" Then
+		If E = 0 Then
+			E = 1
+			MsgboxAsync("Попытка №"&E,"")
+		End If
 		EditTextName.Enabled = False
 	End If
 End Sub
