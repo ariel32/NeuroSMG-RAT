@@ -205,6 +205,8 @@ Sub Pump
 			session = 0
 			bank = 0
 			LabelBank.Text = "Банк: $"&bank
+			lastBallon = 0
+			LabelLastBallon.Text = "Последний шар: $"&lastBallon
 			iter = 0
 			citer = 0
 			ButtonSave.Enabled = False
