@@ -153,7 +153,7 @@ Sub Pump
 				bColor = Colors.Red
 			Else if bColor = 1 Then
 				bColor = Colors.Yellow
-			Else
+			Else if bColor = 2 Then
 				bColor = Colors.Green
 			End If
 		
