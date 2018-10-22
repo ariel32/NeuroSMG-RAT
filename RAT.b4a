@@ -92,7 +92,7 @@ Sub Activity_Create(FirstTime As Boolean)
 	If File.Exists(File.DirRootExternal & "/RAT", "") = False Then
 		File.MakeDir(File.DirRootExternal, "/RAT")
 	End If
-	If File.Exists(File.DirRootExternal, "RAT/result.csv") = False Then
+	If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
 		ButtonShare.Enabled  = False
 		ButtonClear.Enabled = False
 	End If
@@ -211,13 +211,13 @@ Sub Pump
 			citer = 0
 			ButtonSave.Enabled = False
 			LabelN.Text = "Шар: 1"
-			Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/result.csv",True))
+			Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/RAT.csv",True))
 			Writer.WriteList(result)
 			Writer.Close
 			
 			result.Clear
-			ToastMessageShow ("Данные были успешно сохранены в файл " & File.DirRootExternal & "/RAT/result.csv", True)
-			If File.Exists(File.DirRootExternal, "RAT/result.csv") = False Then
+			ToastMessageShow ("Данные были успешно сохранены в файл " & File.DirRootExternal & "/RAT/RAT.csv", True)
+			If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
 				ButtonShare.Enabled  = False
 				ButtonClear.Enabled = False
 			Else
@@ -230,8 +230,8 @@ End Sub
 
 Sub ButtonShare_Click
 	Dim share As MESShareLibrary
-	sharefname = "RAT/result."& DateTime.Now & ".csv"
-	File.Copy(File.DirRootExternal, "RAT/result.csv", File.DirRootExternal, sharefname)
+	sharefname = "RAT/RAT."& DateTime.Now & ".csv"
+	File.Copy(File.DirRootExternal, "RAT/RAT.csv", File.DirRootExternal, sharefname)
 	share.sharebinary("file://" & File.DirRootExternal & "/" & sharefname, "Text/csv", "Send backup file", "")
 End Sub
 
@@ -239,7 +239,7 @@ Sub ButtonClear_Click
 	Dim msgans As Int
 	msgans = Msgbox2("Вы действительно ходите очистить результаты всех исследований?", "", "Да", "Нет", "", Null)
 	If msgans = -1 Then
-		File.Copy(File.DirRootExternal, "RAT/result.csv", File.DirRootExternal, "RAT/backup.results.csv")
+		File.Copy(File.DirRootExternal, "RAT/RAT.csv", File.DirRootExternal, "RAT/backup.RAT.csv")
 		
 		Dim reslist As List
 		reslist.initialize
@@ -247,7 +247,7 @@ Sub ButtonClear_Click
 		reslist=File.ListFiles(File.DirRootExternal & "/RAT")
 		For i = reslist.Size-1 To 0 Step -1
 			resfile=reslist.Get(i)
-			If resfile <> "backup.results.csv" Then
+			If resfile <> "backup.RAT.csv" Then
 				File.Delete(File.DirRootExternal & "/RAT",resfile)
 			End If
 		Next
