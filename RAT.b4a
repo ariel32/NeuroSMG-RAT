@@ -199,7 +199,7 @@ Sub Pump
 		
 		If ln = NEnd+1 Then
 			Msgbox("Исследование окончено, спасибо!","")
-			ln = 0
+			ln = 1
 			name = ""
 			EditTextName.Text = "Введите имя:" : EditTextName.Enabled = True
 			session = 0
