@@ -1,6 +1,8 @@
 ﻿Build1=Default,b4a.example
-File1=main.bal
+File1=login.bal
+File2=main.bal
 FileGroup1=Default Group
+FileGroup2=Default Group
 Group=Default Group
 IconFile=
 Library1=core
@@ -8,7 +10,7 @@ Library2=messharelibrary
 Library3=phone
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
 Module1=Starter
-NumberOfFiles=1
+NumberOfFiles=2
 NumberOfLibraries=3
 NumberOfModules=1
 Version=7.8
@@ -36,7 +38,7 @@ Sub Globals
 	Dim EditTextName As EditText
 	Dim ButtonSave, ButtonShare, ButtonClear As Button
 	Dim x0, y0 As Int
-	Dim start As Boolean
+	Dim start, logged As Boolean
 	Dim r As Float
 	Dim CanvasRes As Canvas
 	Dim bColor As Int
@@ -58,9 +60,14 @@ Sub Globals
 	Dim Writer As TextWriter
 	Dim result As List
 	Dim Vibrate As PhoneVibrate
+	Private ButtonLStart As Button
+	Private EditTextLName As EditText
+	Private ToggleButtonLSex As ToggleButton
+	Private EditTextLAge As EditText
 End Sub
 
 Sub Activity_Create(FirstTime As Boolean)
+	logged = False
 '	Dim p As Phone
 '	p.SetScreenOrientation(0)
 	Activity.LoadLayout("main")
@@ -97,6 +104,7 @@ Sub Activity_Create(FirstTime As Boolean)
 		ButtonShare.Enabled  = False
 		ButtonClear.Enabled = False
 	End If
+	login
 End Sub
 
 Sub Activity_Resume
@@ -108,130 +116,143 @@ Sub Activity_Pause (UserClosed As Boolean)
 End Sub
 
 Sub Activity_Touch(Action As Int, tx As Float, ty As Float)
-	Select Action
-		Case Activity.ACTION_DOWN
-			t = DateTime.Now
-		Case Activity.ACTION_UP
-			If EditTextName.Text = "Введите имя:" Or EditTextName.Text = "" Then
-				ToastMessageShow ("Введите имя!", False)
-			Else 
-				time = DateTime.Now
-				duration = time-t
-				mark = "pump"
-				Pump
-			End If
-	End Select
+	If logged = True Then
+		If iter = 0 Then
+			ButtonSave.Enabled = True
+		End If
+		Select Action
+			Case Activity.ACTION_DOWN
+				t = DateTime.Now
+			Case Activity.ACTION_UP
+				If EditTextName.Text = "Введите имя:" Or EditTextName.Text = "" Then
+					ToastMessageShow ("Введите имя!", False)
+				Else
+					time = DateTime.Now
+					duration = time-t
+					mark = "pump"
+					Pump
+				End If
+		End Select
+	End If
 End Sub
 
 Sub Pump
-	If EditTextName.Text <> "Введите имя:" And EditTextName.Text <> "" And EditTextName.Text <> " " Then
-		If session = 0 Then
-			session = DateTime.Now
-		End If
-		
-		ButtonSave.Enabled = True
-		iter = iter + 1
-		If start = True Then
-			r = 10
-			citer = 0
-			CanvasRes.DrawColor(Colors.Black)
-			CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
-			start = False
-		End If
-
-		If start = False Then
-			r = r + 2
-			n = n + 1
-			citer = citer + 1
-		End If
-		
-		If n = m + 1 Or saved = True Then
-			start = True
-			r = 10
-			bColor = Rnd(0,3)
-			If  bColor = 0 Then
-				bColor = Colors.Red
-			Else if bColor = 1 Then
-				bColor = Colors.Yellow
-			Else if bColor = 2 Then
-				bColor = Colors.Green
-			End If
-		
-			If bColor = Colors.Red Then
-				m = 8
-				n = Rnd(1,m-1)
-			End If
-			If bColor = Colors.Yellow Then
-				m = 32
-				n = Rnd(1,m-1)
-			End If
-			If bColor = Colors.Green Then
-				m = 128
-				n = Rnd(1,m-1)
-			End If
-			
-			If saved = True Then
-				lastBallonCost = Round2((citer-1)*0.05, 2)
-				LabelLastBallon.Text = "Последний шар: $"&lastBallonCost
-				bank = Round2(bank + lastBallonCost, 2)
-				LabelBank.Text = "Банк: $"&bank
-				mark = "save"
-			Else
-				ToastMessageShow ("Ой, шарик лопнул...", False)
-				Vibrate.Vibrate (100)
-				LabelLastBallon.Text =  "Последний шар: $0"
-				mark = "exploded"
+	If logged = True Then
+		If EditTextName.Text <> "Введите имя:" And EditTextName.Text <> "" And EditTextName.Text <> " " Then
+			If session = 0 Then
+				session = DateTime.Now
 			End If
 
-			citer = 0
-			
-			CanvasRes.DrawColor(Colors.Black)
-			CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
-			
-			ln = ln + 1
-			LabelN.Text = "Шар: "&ln
-			saved = False
-		End If
-		name = EditTextName.text
-		l = "m: "&m&", n: "&n&", r: "&r&", Шар: "&ln&", Iter: "&iter&", Citer: "&citer&", bank: "&bank&", mark: "&mark&", E: "&E
-		Log(l)
-		result.Add(session&";"&time&";"&name&";"&E&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&duration&";"&mark&";"&bank)
-		'LabelInfo.Text = l
-		CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
-		Activity.Invalidate3(x0 - 7dip, y0 - 7dip, x0 + 7dip, y0 + 7dip)
+			iter = iter + 1
+			If start = True Then
+				r = 10
+				citer = 0
+				CanvasRes.DrawColor(Colors.Black)
+				CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
+				start = False
+			End If
+
+			If start = False Then
+				r = r + 2
+				n = n + 1
+				citer = citer + 1
+			End If
 		
-		If ln = NEnd+1 Then
-			If E < 3 Then
-				E = E + 1
-				MsgboxAsync("Попытка №"&E,"")
-			Else if E = 3 Then
-				Msgbox("Исследование окончено, спасибо!","")
-				E = 0
-				name = ""
-				EditTextName.Text = "Введите имя:" : EditTextName.Enabled = True
-				session = 0
+			If n = m + 1 Or saved = True Then
+				start = True
+				r = 10
+				bColor = Rnd(0,3)
+				If  bColor = 0 Then
+					bColor = Colors.Red
+				Else if bColor = 1 Then
+					bColor = Colors.Yellow
+				Else if bColor = 2 Then
+					bColor = Colors.Green
+				End If
+		
+				If bColor = Colors.Red Then
+					m = 8
+					n = Rnd(1,m-1)
+				End If
+				If bColor = Colors.Yellow Then
+					m = 32
+					n = Rnd(1,m-1)
+				End If
+				If bColor = Colors.Green Then
+					m = 128
+					n = Rnd(1,m-1)
+				End If
+			
+				If saved = True Then
+					lastBallonCost = Round2((citer-1)*0.05, 2)
+					LabelLastBallon.Text = "Последний шар: $"&lastBallonCost
+					bank = Round2(bank + lastBallonCost, 2)
+					LabelBank.Text = "Банк: $"&bank
+					mark = "save"
+				Else
+					ToastMessageShow ("Ой, шарик лопнул...", False)
+					Vibrate.Vibrate (100)
+					LabelLastBallon.Text =  "Последний шар: $0"
+					mark = "exploded"
+				End If
+
+				citer = 0
+			
+				CanvasRes.DrawColor(Colors.Black)
+				CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
+			
+				ln = ln + 1
+				LabelN.Text = "Шар: "&ln
+				saved = False
+			End If
+		
+			If ln = NEnd+1 Then
+				If E < 3 Then
+					E = E + 1
+					MsgboxAsync("Попытка №"&E,"")
+				Else if E = 3 Then
+					Msgbox("Исследование окончено, спасибо!","")
+					E = 0
+					name = ""
+					session = 0
+					result.Add(session&";"&time&";"&name&";"&E&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&duration&";"&mark&";"&bank)
+					Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/RAT.csv",True))
+					Writer.WriteList(result)
+					Writer.Close
+					result.Clear
+					ToastMessageShow ("Данные были успешно сохранены в файл " & File.DirRootExternal & "/RAT/RAT.csv", True)
+					logged = False
+					login
+				End If
 				ButtonSave.Enabled = False
-				Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/RAT.csv",True))
-				Writer.WriteList(result)
-				Writer.Close
-				result.Clear
-				ToastMessageShow ("Данные были успешно сохранены в файл " & File.DirRootExternal & "/RAT/RAT.csv", True)
+				LabelN.Text = "Шар: 1"
+				ln = 1
+				LabelBank.Text = "Банк: $0"
+				LabelLastBallon.Text = "Последний шар: $0"
+				iter = 0
+				citer = 0
+				If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
+					ButtonShare.Enabled  = False
+					ButtonClear.Enabled = False
+				Else
+					ButtonShare.Enabled  = True
+					ButtonClear.Enabled = True
+				End If
+			End If
+						
+			If logged = True Then
+				l = "name: "&name&"m: "&m&", n: "&n&", r: "&r&", Шар: "&ln&", Iter: "&iter&", Citer: "&citer&", bank: "&bank&", mark: "&mark&", E: "&E
+				Log(l)
+				result.Add(session&";"&time&";"&name&";"&E&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&duration&";"&mark&";"&bank)
+				'LabelInfo.Text = l
+				CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
+				Activity.Invalidate3(x0 - 7dip, y0 - 7dip, x0 + 7dip, y0 + 7dip)
 			End If
 			
-			LabelN.Text = "Шар: 1"
-			ln = 1
-			bank = 0
-			LabelBank.Text = "Банк: $"&bank
-			lastBallon = 0
-			LabelLastBallon.Text = "Последний шар: $"&lastBallon
-			iter = 0
-			citer = 0
-			If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
-				ButtonShare.Enabled  = False
-				ButtonClear.Enabled = False
-			Else
-				ButtonShare.Enabled  = True
-				ButtonClear.Enabled = True
+			' если счетчик обнулялся во 2 или 3 попытке, обнуляем принудительно
+			If ln = 1 And E <> 1 Then
+				bank = 0
+				lastBallon = 0
 			End If
 		End If
 	End If
@@ -266,14 +287,6 @@ Sub ButtonClear_Click
 	End If
 End Sub
 
-Sub EditTextName_FocusChanged (HasFocus As Boolean)
-	EditTextName.Text = ""
-End Sub
-
-Sub edittextname_click
-	EditTextName.Text = ""
-End Sub
-
 Sub ButtonSave_click
 	saved = True
 	mark = "save"
@@ -281,12 +294,33 @@ Sub ButtonSave_click
 	Pump
 End Sub
 
-Sub EditTextName_EnterPressed
-	If EditTextName.Text <> "" And EditTextName.Text <> "Введите имя:" Then
-		If E = 0 Then
-			E = 1
-			MsgboxAsync("Попытка №"&E,"")
+Sub login
+	If logged = False Then
+		CanvasRes.DrawColor(Colors.Black)
+		Activity.RemoveAllViews
+		Activity.LoadLayout("login")
+	End If
+End Sub
+
+Sub ButtonLStart_Click
+	If EditTextLName.Text = "" Or EditTextLAge.Text = "" Then
+		ToastMessageShow ("Корректно укажите данные!", False)
+	Else
+		logged = True
+		If ToggleButtonLSex.Checked = False Then
+			name = EditTextLName.Text&",муж,"&EditTextLAge.Text
+		Else
+			name = EditTextLName.Text&",жен,"&EditTextLAge.Text
 		End If
-		EditTextName.Enabled = False
+		Activity.RemoveAllViews
+		Activity.LoadLayout("main")
+		ButtonSave.Enabled = False
+		EditTextName.Text = name
+		CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
+		E = 1
+		LabelN.Text = "Шар: "&ln
+		LabelBank.Text = "Банк: $"&bank
+		LabelLastBallon.Text = "Последний шар: $"&lastBallon
+		MsgboxAsync("Попытка №"&E,"")
 	End If
 End Sub
