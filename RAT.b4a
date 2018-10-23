@@ -139,6 +139,10 @@ Sub Activity_Touch(Action As Int, tx As Float, ty As Float)
 End Sub
 
 Sub Pump
+	If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
+		ButtonShare.Enabled  = False
+		ButtonClear.Enabled = False
+	End If
 	If logged = True Then
 		If EditTextName.Text <> "Введите имя:" And EditTextName.Text <> "" And EditTextName.Text <> " " Then
 			If session = 0 Then
@@ -294,6 +298,8 @@ Sub deletedata
 		
 		ButtonShare.Enabled  = False
 		ButtonClear.Enabled = False
+		ButtonLShare.Enabled  = False
+		ButtonLClear.Enabled = False
 	End If
 End Sub
 
@@ -317,10 +323,10 @@ Sub login
 		CanvasRes.DrawColor(Colors.Black)
 		Activity.RemoveAllViews
 		Activity.LoadLayout("login")
-	End If
-	If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
-		ButtonLShare.Enabled  = False
-		ButtonLClear.Enabled = False
+		If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
+			ButtonLShare.Enabled  = False
+			ButtonLClear.Enabled = False
+		End If
 	End If
 End Sub
 
@@ -328,6 +334,10 @@ Sub ButtonLStart_Click
 	If EditTextLName.Text = "" Or EditTextLAge.Text = "" Then
 		ToastMessageShow ("Корректно укажите данные!", False)
 	Else
+		If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
+			ButtonLShare.Enabled  = False
+			ButtonLClear.Enabled = False
+		End If
 		logged = True
 		If ToggleButtonLSex.Checked = False Then
 			name = EditTextLName.Text&",муж,"&EditTextLAge.Text
@@ -337,6 +347,10 @@ Sub ButtonLStart_Click
 		Activity.RemoveAllViews
 		Activity.LoadLayout("main")
 		ButtonSave.Enabled = False
+		If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
+			ButtonShare.Enabled  = False
+			ButtonClear.Enabled = False
+		End If
 		EditTextName.Text = name
 		CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
 		E = 1
