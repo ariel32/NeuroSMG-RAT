@@ -64,6 +64,8 @@ Sub Globals
 	Private EditTextLName As EditText
 	Private ToggleButtonLSex As ToggleButton
 	Private EditTextLAge As EditText
+	Private ButtonLShare As Button
+	Private ButtonLClear As Button
 End Sub
 
 Sub Activity_Create(FirstTime As Boolean)
@@ -258,14 +260,22 @@ Sub Pump
 	End If
 End Sub
 
-Sub ButtonShare_Click
+Sub sharedata
 	Dim share As MESShareLibrary
 	sharefname = "RAT/RAT."& DateTime.Now & ".csv"
 	File.Copy(File.DirRootExternal, "RAT/RAT.csv", File.DirRootExternal, sharefname)
 	share.sharebinary("file://" & File.DirRootExternal & "/" & sharefname, "Text/csv", "Send backup file", "")
 End Sub
 
-Sub ButtonClear_Click
+Sub ButtonShare_Click
+	sharedata
+End Sub
+
+Sub ButtonLShare_Click
+	sharedata
+End Sub
+
+Sub deletedata
 	Dim msgans As Int
 	msgans = Msgbox2("Вы действительно ходите очистить результаты всех исследований?", "", "Да", "Нет", "", Null)
 	If msgans = -1 Then
@@ -287,6 +297,14 @@ Sub ButtonClear_Click
 	End If
 End Sub
 
+Sub ButtonClear_Click
+	deletedata
+End Sub
+
+Sub ButtonLClear_Click
+	deletedata
+End Sub
+
 Sub ButtonSave_click
 	saved = True
 	mark = "save"
@@ -299,6 +317,10 @@ Sub login
 		CanvasRes.DrawColor(Colors.Black)
 		Activity.RemoveAllViews
 		Activity.LoadLayout("login")
+	End If
+	If File.Exists(File.DirRootExternal, "RAT/RAT.csv") = False Then
+		ButtonLShare.Enabled  = False
+		ButtonLClear.Enabled = False
 	End If
 End Sub
 
