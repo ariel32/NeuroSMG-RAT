@@ -218,14 +218,14 @@ Sub Pump
 					MsgboxAsync("Попытка №"&E,"")
 				Else if E = 3 Then
 					Msgbox("Исследование окончено, спасибо!","")
-					E = 0
-					name = ""
-					session = 0
 					result.Add(session&";"&time&";"&name&";"&E&";"&m&";"&n&";"&r&";"&ln&";"&iter&";"&citer&";"&duration&";"&mark&";"&bank)
 					Writer.Initialize(File.OpenOutput(File.DirRootExternal,"RAT/RAT.csv",True))
 					Writer.WriteList(result)
 					Writer.Close
 					result.Clear
+					E = 0
+					name = ""
+					session = 0
 					ToastMessageShow ("Данные были успешно сохранены в файл " & File.DirRootExternal & "/RAT/RAT.csv", True)
 					logged = False
 					login
