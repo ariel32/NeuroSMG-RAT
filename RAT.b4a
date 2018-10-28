@@ -1,4 +1,4 @@
-﻿Build1=Default,b4a.example
+﻿Build1=Default,RAT.test.NeuroSMG
 File1=login.bal
 File2=main.bal
 FileGroup1=Default Group
@@ -16,7 +16,7 @@ NumberOfModules=1
 Version=7.8
 @EndOfDesignText@
 #Region  Project Attributes 
-	#ApplicationLabel: Risk Assessment Test
+	#ApplicationLabel: RAT
 	#VersionCode: 001
 	#VersionName: FuryRain
 	'SupportedOrientations possible values: unspecified, landscape or portrait.
