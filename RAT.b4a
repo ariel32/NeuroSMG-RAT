@@ -159,12 +159,14 @@ Sub Pump
 			End If
 
 			If start = False Then
+				ButtonSave.Enabled = True
 				r = r + 2
 				n = n + 1
 				citer = citer + 1
 			End If
 		
 			If n = m + 1 Or saved = True Then
+				ButtonSave.Enabled = False
 				start = True
 				r = 10
 				bColor = Rnd(0,3)
@@ -352,6 +354,7 @@ Sub ButtonLStart_Click
 			ButtonClear.Enabled = False
 		End If
 		EditTextName.Text = name
+		EditTextName.Enabled = False
 		CanvasRes.DrawCircle(x0, y0, r, bColor, True, 3dip)
 		E = 1
 		LabelN.Text = "Шар: "&ln
