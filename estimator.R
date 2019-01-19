@@ -20,6 +20,8 @@ do.estimation <- function(filename) {
   E.names <- c("1" = "Первая попытка", "2" = "Вторая попытка", "3" = "Третья попытка")
   
   for(x in unique(d.src$session)) {
+    # x = unique(d.src$session)[1]
+    print(x)
     d <- d.src[d.src$session==x,]
     
     d <- rbind(d[1,], d)
@@ -61,19 +63,6 @@ do.estimation <- function(filename) {
             axis.ticks.x = element_blank(),
             axis.title.y = element_text(face="bold", size=20),
             axis.text.y  = element_text(angle=90, vjust=0, size=16))
-    
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 1 & d$size == 8], na.rm = T), sd(d$tick[d$E == 1 & d$size == 8], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 2 & d$size == 8], na.rm = T), sd(d$tick[d$E == 2 & d$size == 8], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 3 & d$size == 8], na.rm = T), sd(d$tick[d$E == 3 & d$size == 8], na.rm = T))
-    
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 1 & d$size == 32], na.rm = T), sd(d$tick[d$E == 1 & d$size == 32], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 2 & d$size == 32], na.rm = T), sd(d$tick[d$E == 2 & d$size == 32], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 3 & d$size == 32], na.rm = T), sd(d$tick[d$E == 3 & d$size == 32], na.rm = T))
-    
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 1 & d$size == 128], na.rm = T), sd(d$tick[d$E == 1 & d$size == 128], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 2 & d$size == 128], na.rm = T), sd(d$tick[d$E == 2 & d$size == 128], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$tick[d$E == 3 & d$size == 128], na.rm = T), sd(d$tick[d$E == 3 & d$size == 128], na.rm = T))
-    
     
     result$interval.H1 <- mean(d$tick[d$E == 1 & d$size == 8])
     result$interval.H2 <- mean(d$tick[d$E == 2 & d$size == 8])
@@ -121,20 +110,6 @@ do.estimation <- function(filename) {
             axis.ticks.x = element_blank(),
             axis.title.y = element_text(face="bold", size=20),
             axis.text.y  = element_text(angle=90, vjust=0, size=16))
-    
-    
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 1 & d$size == 8], na.rm = T), sd(d$duration[d$E == 1 & d$size == 8], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 2 & d$size == 8], na.rm = T), sd(d$duration[d$E == 2 & d$size == 8], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 3 & d$size == 8], na.rm = T), sd(d$duration[d$E == 3 & d$size == 8], na.rm = T))
-    
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 1 & d$size == 32], na.rm = T), sd(d$duration[d$E == 1 & d$size == 32], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 2 & d$size == 32], na.rm = T), sd(d$duration[d$E == 2 & d$size == 32], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 3 & d$size == 32], na.rm = T), sd(d$duration[d$E == 3 & d$size == 32], na.rm = T))
-    
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 1 & d$size == 128], na.rm = T), sd(d$duration[d$E == 1 & d$size == 128], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 2 & d$size == 128], na.rm = T), sd(d$duration[d$E == 2 & d$size == 128], na.rm = T))
-    sprintf("%.2f±%.2f", mean(d$duration[d$E == 3 & d$size == 128], na.rm = T), sd(d$duration[d$E == 3 & d$size == 128], na.rm = T))
-    
     
     result$duration.H1 <- mean(d$duration[d$E == 1 & d$size == 8])
     result$duration.H2 <- mean(d$duration[d$E == 2 & d$size == 8])

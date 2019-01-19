@@ -1,0 +1,412 @@
+---
+title: "Estimator explaination"
+author: "Cherubael"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center")
+```
+
+## Описание исходных данных
+```{r}
+# Загрузка данных и необходимых пакетов
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+library(tidyverse)
+d = read.csv("result.csv", sep = ";", encoding = "UTF-8", header = F)
+names(d) <- c("session","time", "name","E","size","n","r", "ln","iter","citer","duration","mark","bank")
+d$time <- as.numeric(d$time)
+d$session <- as.character(d$session)
+E.names <- c("1" = "Первая попытка", "2" = "Вторая попытка", "3" = "Третья попытка")
+d <- rbind(d[1,], d)
+d$n[1] <- d$n[1]-1
+d$iter[1] <- d$iter[1]-1
+d$citer[1] <- d$citer[1]-1
+d$mark[1:(nrow(d)-1)] <- d$mark[2:(nrow(d))]
+d$duration[1:(nrow(d)-1)] <- d$duration[2:(nrow(d))]
+
+d$tick <- c(NA,diff(d$time))
+
+d$tick[1:(nrow(d)-1)] <- d$tick[2:(nrow(d))]
+d <- d[-c(nrow(d)),]
+
+d$tick[which((d$E == 1 | d$E == 2 | d$E == 3) & d$iter==0)] <- 0
+
+d$time     <- as.integer(d$time/1000)
+d$datetime <- as.POSIXct(d$time, origin="1970-01-01")
+d$datetime <- format(d$datetime, format="%H:%M:%S")
+result <- data.frame(session = d$session[1], name = d$name[1])
+```
+
+Исходные данные имеют следующий вид:
+
+```{r}
+tbl <- knitr::kable(head(d), align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+где:
+
+* ***session*** - идетификатор сессии исследования, равный времени начала теста,
+* ***time*** - текущее время, в которое произошло прикосновение к экрану,
+* ***name*** - идетификатор испытуемого,
+* ***E*** - последовательный номер попытки,
+* ***size*** - максимальный размер шара (по умолчанию красный шар имеет размер равный 8, желтый шар имеет размер равный 32, зеленый шар имеет размер равный 128),
+* ***n*** - текущий размер шара,
+* ***r*** - радиус шара,
+* ***ln*** - идентификатор текущего шара,
+* ***iter*** - идетификатор касания в пределах всех трех попыток,
+* ***citer*** - идетификатор касания для текущей попытки,
+* ***duration*** - продолжительность касания,
+* ***mark*** - метка действия (накачка шара, взрыв или сохранение денег в банк),
+* ***bank*** - количество денег, сохраненных в банке,
+* ***tick*** - количество миллисекунд, прошедших с прошедшего касания,
+* ***datetime*** - текущее время в человекочитаемом формате.
+
+# Интервал между касаниями
+
+```{r}
+##########################################################################################
+ggplot(d, aes(x=factor(size), y=remove_outliers(tick))) +
+  geom_violin(scale="width") +
+  geom_smooth(method = "gam", se=TRUE, aes(group=1)) +
+  geom_boxplot(width=.12, fill=I("black"), notch=T, outlier.size=NA, col="grey40") +
+  stat_summary(fun.y="median", geom="point", shape=20, col="red", size = 10) +
+  ggtitle("Результаты BART") +
+  labs(x="Вид шара", y="Интервал между касаниями, мс") +
+  facet_grid(E~name, labeller = labeller(E = E.names)) +
+  scale_x_discrete(labels = c("Красный шар","Желтый шар","Зеленый шар")) +
+  theme(legend.position="none",
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold")) +
+  scale_fill_brewer() + geom_jitter(alpha = 0.8) +
+  theme(plot.title = element_text(size=16, face='bold', hjust=0.5),
+        axis.text.x  = element_text(angle=0, vjust=0, size=16),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_text(face="bold", size=20),
+        axis.text.y  = element_text(angle=90, vjust=0, size=16))
+
+result$interval.H1 <- mean(d$tick[d$E == 1 & d$size == 8])
+result$interval.H2 <- mean(d$tick[d$E == 2 & d$size == 8])
+result$interval.H3 <- mean(d$tick[d$E == 3 & d$size == 8])
+
+result$interval.M1 <- mean(d$tick[d$E == 1 & d$size == 32])
+result$interval.M2 <- mean(d$tick[d$E == 2 & d$size == 32])
+result$interval.M3 <- mean(d$tick[d$E == 3 & d$size == 32])
+
+result$interval.L1 <- mean(d$tick[d$E == 1 & d$size == 128])
+result$interval.L2 <- mean(d$tick[d$E == 2 & d$size == 128])
+result$interval.L3 <- mean(d$tick[d$E == 3 & d$size == 128])
+
+# scaled time
+result$interval.std.H1 <- mean(scale(d$tick[d$E == 1 & d$size == 8]))
+result$interval.std.H2 <- mean(scale(d$tick[d$E == 2 & d$size == 8]))
+result$interval.std.H3 <- mean(scale(d$tick[d$E == 3 & d$size == 8]))
+
+result$interval.std.M1 <- mean(scale(d$tick[d$E == 1 & d$size == 32]))
+result$interval.std.M2 <- mean(scale(d$tick[d$E == 2 & d$size == 32]))
+result$interval.std.M3 <- mean(scale(d$tick[d$E == 3 & d$size == 32]))
+
+result$interval.std.L1 <- mean(scale(d$tick[d$E == 1 & d$size == 128]))
+result$interval.std.L2 <- mean(scale(d$tick[d$E == 2 & d$size == 128]))
+result$interval.std.L3 <- mean(scale(d$tick[d$E == 3 & d$size == 128]))
+```
+
+Результаты представлены как усредненное время интервалов между касаниями для каждого из видов шаров (красный, желтый, зеленый) в каждой из попыток:
+
+```{r}
+tbl <- data.frame(red    = c(result$interval.H1, result$interval.H2, result$interval.H3),
+                  yellow = c(result$interval.M1, result$interval.M2, result$interval.M3),
+                  green  = c(result$interval.L1, result$interval.L2, result$interval.L3))
+
+colnames(tbl) <- c("Красный шар","Желтый шар","Зеленый шар")
+rownames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка")
+
+tbl <- knitr::kable(tbl, align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+Также расчитывается стандартизованное (при помощи Z-преобразования) время интервалов между касаниями для каждого из шаров в каждой из попыток:
+
+```{r}
+tbl <- data.frame(red    = c(result$interval.std.H1, result$interval.std.H2, result$interval.std.H3),
+                  yellow = c(result$interval.std.M1, result$interval.std.M2, result$interval.std.M3),
+                  green  = c(result$interval.std.L1, result$interval.std.L2, result$interval.std.L3))
+
+colnames(tbl) <- c("Красный шар","Желтый шар","Зеленый шар")
+rownames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка")
+
+tbl <- knitr::kable(tbl, align = "c", digits = 40)
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+# Продолжительность касания
+
+```{r}
+ggplot(d, aes(x=factor(size), y=remove_outliers(duration))) +
+  geom_violin(scale="width") +
+  geom_smooth(method = "gam", se=TRUE, aes(group=1)) +
+  geom_boxplot(width=.12, fill=I("black"), notch=T, outlier.size=NA, col="grey40") +
+  stat_summary(fun.y="median", geom="point", shape=20, col="red", size = 10) +
+  ggtitle("Результаты BART") +
+  labs(x="Вид шара", y="Продолжительность касания, мс") +
+  facet_grid(E~name, labeller = labeller(E = E.names)) +
+  scale_x_discrete(labels = c("Красный шар","Желтый шар","Зеленый шар")) +
+  theme(legend.position="none",
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold")) +
+  scale_fill_brewer() + geom_jitter(alpha = 0.8) +
+  theme(plot.title = element_text(size=16, face='bold', hjust=0.5),
+        axis.text.x  = element_text(angle=0, vjust=0, size=16),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_text(face="bold", size=20),
+        axis.text.y  = element_text(angle=90, vjust=0, size=16))
+
+result$duration.H1 <- mean(d$duration[d$E == 1 & d$size == 8])
+result$duration.H2 <- mean(d$duration[d$E == 2 & d$size == 8])
+result$duration.H3 <- mean(d$duration[d$E == 3 & d$size == 8])
+
+result$duration.M1 <- mean(d$duration[d$E == 1 & d$size == 32])
+result$duration.M2 <- mean(d$duration[d$E == 2 & d$size == 32])
+result$duration.M3 <- mean(d$duration[d$E == 3 & d$size == 32])
+
+result$duration.L1 <- mean(d$duration[d$E == 1 & d$size == 128])
+result$duration.L2 <- mean(d$duration[d$E == 2 & d$size == 128])
+result$duration.L3 <- mean(d$duration[d$E == 3 & d$size == 128])
+
+# scaled time
+result$duration.std.H1 <- mean(scale(d$duration[d$E == 1 & d$size == 8]))
+result$duration.std.H2 <- mean(scale(d$duration[d$E == 2 & d$size == 8]))
+result$duration.std.H3 <- mean(scale(d$duration[d$E == 3 & d$size == 8]))
+
+result$duration.std.M1 <- mean(scale(d$duration[d$E == 1 & d$size == 32]))
+result$duration.std.M2 <- mean(scale(d$duration[d$E == 2 & d$size == 32]))
+result$duration.std.M3 <- mean(scale(d$duration[d$E == 3 & d$size == 32]))
+
+result$duration.std.L1 <- mean(scale(d$duration[d$E == 1 & d$size == 128]))
+result$duration.std.L2 <- mean(scale(d$duration[d$E == 2 & d$size == 128]))
+result$duration.std.L3 <- mean(scale(d$duration[d$E == 3 & d$size == 128]))
+```
+
+Результаты представлены как усредненная продолжительность касания для каждого из видов шаров (красный, желтый, зеленый) в каждой из попыток:
+
+```{r}
+tbl <- data.frame(red    = c(result$duration.H1, result$duration.H2, result$duration.H3),
+                  yellow = c(result$duration.M1, result$duration.M2, result$duration.M3),
+                  green  = c(result$duration.L1, result$duration.L2, result$duration.L3))
+
+colnames(tbl) <- c("Красный шар","Желтый шар","Зеленый шар")
+rownames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка")
+
+tbl <- knitr::kable(tbl, align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+Также расчитывается стандартизованное (при помощи Z-преобразования) продолжительность касания для каждого из шаров в каждой из попыток:
+
+```{r}
+tbl <- data.frame(red    = c(result$duration.std.H1, result$duration.std.H2, result$duration.std.H3),
+                  yellow = c(result$duration.std.M1, result$duration.std.M2, result$duration.std.M3),
+                  green  = c(result$duration.std.L1, result$duration.std.L2, result$duration.std.L3))
+
+colnames(tbl) <- c("Красный шар","Желтый шар","Зеленый шар")
+rownames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка")
+
+tbl <- knitr::kable(tbl, align = "c", digits = 40)
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+# Скорость касания (отношение интервала между касаниями к их продолжительности)
+
+```{r}
+ggplot(d, aes(x=factor(size), y=remove_outliers(tick/duration))) +
+  geom_violin(scale="width") +
+  geom_smooth(method = "gam", se=TRUE, aes(group=1)) +
+  geom_boxplot(width=.12, fill=I("black"), notch=T, outlier.size=NA, col="grey40") +
+  stat_summary(fun.y="median", geom="point", shape=20, col="red", size = 10) +
+  ggtitle("Результаты BART") +
+  labs(x="Вид шара", y="Скорость касания, мс") +
+  facet_grid(E~name, labeller = labeller(E = E.names)) +
+  scale_x_discrete(labels = c("Красный шар","Желтый шар","Зеленый шар")) +
+  theme(legend.position="none",
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=16,face="bold")) +
+  scale_fill_brewer() + geom_jitter(alpha = 0.8) +
+  theme(plot.title = element_text(size=16, face='bold', hjust=0.5),
+        axis.text.x  = element_text(angle=0, vjust=0, size=16),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_text(face="bold", size=20),
+        axis.text.y  = element_text(angle=90, vjust=0, size=16))
+
+result$speed.H1 <- mean(d$tick[d$E == 1 & d$size == 8]/d$duration[d$E == 1 & d$size == 8], na.rm = T)
+result$speed.H2 <- mean(d$tick[d$E == 2 & d$size == 8]/d$duration[d$E == 2 & d$size == 8], na.rm = T)
+result$speed.H3 <- mean(d$tick[d$E == 3 & d$size == 8]/d$duration[d$E == 3 & d$size == 8], na.rm = T)
+
+result$speed.M1 <- mean(d$tick[d$E == 1 & d$size == 32]/d$duration[d$E == 1 & d$size == 32], na.rm = T)
+result$speed.M2 <- mean(d$tick[d$E == 2 & d$size == 32]/d$duration[d$E == 2 & d$size == 32], na.rm = T)
+result$speed.M3 <- mean(d$tick[d$E == 3 & d$size == 32]/d$duration[d$E == 3 & d$size == 32], na.rm = T)
+
+result$speed.L1 <- mean(d$tick[d$E == 1 & d$size == 128]/d$duration[d$E == 1 & d$size == 128], na.rm = T)
+result$speed.L2 <- mean(d$tick[d$E == 2 & d$size == 128]/d$duration[d$E == 2 & d$size == 128], na.rm = T)
+result$speed.L3 <- mean(d$tick[d$E == 3 & d$size == 128]/d$duration[d$E == 3 & d$size == 128], na.rm = T)
+
+result$speed.cor.H1 <- cor.test(d$tick[d$E == 1 & d$size == 8], d$duration[d$E == 1 & d$size == 8], method = "sp")$estimate
+result$speed.cor.H2 <- cor.test(d$tick[d$E == 2 & d$size == 8], d$duration[d$E == 2 & d$size == 8], method = "sp")$estimate
+result$speed.cor.H3 <- cor.test(d$tick[d$E == 3 & d$size == 8], d$duration[d$E == 3 & d$size == 8], method = "sp")$estimate
+
+result$speed.cor.M1 <- cor.test(d$tick[d$E == 1 & d$size == 32], d$duration[d$E == 1 & d$size == 32], method = "sp")$estimate
+result$speed.cor.M2 <- cor.test(d$tick[d$E == 2 & d$size == 32], d$duration[d$E == 2 & d$size == 32], method = "sp")$estimate
+result$speed.cor.M3 <- cor.test(d$tick[d$E == 3 & d$size == 32], d$duration[d$E == 3 & d$size == 32], method = "sp")$estimate
+
+result$speed.cor.L1 <- cor.test(d$tick[d$E == 1 & d$size == 128], d$duration[d$E == 1 & d$size == 128], method = "sp")$estimate
+result$speed.cor.L2 <- cor.test(d$tick[d$E == 2 & d$size == 128], d$duration[d$E == 2 & d$size == 128], method = "sp")$estimate
+result$speed.cor.L3 <- cor.test(d$tick[d$E == 3 & d$size == 128], d$duration[d$E == 3 & d$size == 128], method = "sp")$estimate
+```
+
+Результаты представлены как усредненная скорость касания (отношение интервала между касаниями к их продолжительности) для каждого из видов шаров (красный, желтый, зеленый) в каждой из попыток:
+
+```{r}
+tbl <- data.frame(red    = c(result$speed.H1, result$speed.H2, result$speed.H3),
+                  yellow = c(result$speed.M1, result$speed.M2, result$speed.M3),
+                  green  = c(result$speed.L1, result$speed.L2, result$speed.L3))
+
+colnames(tbl) <- c("Красный шар","Желтый шар","Зеленый шар")
+rownames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка")
+
+tbl <- knitr::kable(tbl, align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+Также результаты выражаются как коэффициент корреляции (по методу Спирмена) между интервалом между касаниями и их продолжительностью для каждого из видов шаров (красный, желтый, зеленый) в каждой из попыток:
+
+```{r}
+tbl <- data.frame(red    = c(result$speed.cor.H1, result$speed.cor.H2, result$speed.cor.H3),
+                  yellow = c(result$speed.cor.M1, result$speed.cor.M2, result$speed.cor.M3),
+                  green  = c(result$speed.cor.L1, result$speed.cor.L2, result$speed.cor.L3))
+
+colnames(tbl) <- c("Красный шар","Желтый шар","Зеленый шар")
+rownames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка")
+
+tbl <- knitr::kable(tbl, align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+# Доля взорвавшихся и сохраненных шаров
+
+```{r}
+dm <- d[,c("size","mark","E")]
+dm <- dm[dm$mark != "pump", ]; dm$mark <- droplevels(dm$mark)
+#table(dm)
+mosaicplot(~E+mark+size, data = dm, color = 2:4, main = "Доля взорвавшихся и сохраненных шаров")
+
+result$save.ratio.E1 <- sum(dm$mark == "save" & dm$E == 1)/sum(dm$E == 1)
+result$save.ratio.E2 <- sum(dm$mark == "save" & dm$E == 2)/sum(dm$E == 2)
+result$save.ratio.E3 <- sum(dm$mark == "save" & dm$E == 3)/sum(dm$E == 3)
+
+result$save.ratio.H1 <- sum(dm$mark == "save" & dm$E == 1 & dm$size == 8)/sum(dm$E == 1 & dm$size == 8)
+result$save.ratio.H2 <- sum(dm$mark == "save" & dm$E == 2 & dm$size == 8)/sum(dm$E == 2 & dm$size == 8)
+result$save.ratio.H3 <- sum(dm$mark == "save" & dm$E == 3 & dm$size == 8)/sum(dm$E == 3 & dm$size == 8)
+
+result$save.ratio.M1 <- sum(dm$mark == "save" & dm$E == 1 & dm$size == 32)/sum(dm$E == 1 & dm$size == 32)
+result$save.ratio.M2 <- sum(dm$mark == "save" & dm$E == 2 & dm$size == 32)/sum(dm$E == 2 & dm$size == 32)
+result$save.ratio.M3 <- sum(dm$mark == "save" & dm$E == 3 & dm$size == 32)/sum(dm$E == 3 & dm$size == 32)
+
+result$save.ratio.L1 <- sum(dm$mark == "save" & dm$E == 1 & dm$size == 128)/sum(dm$E == 1 & dm$size == 128)
+result$save.ratio.L2 <- sum(dm$mark == "save" & dm$E == 2 & dm$size == 128)/sum(dm$E == 2 & dm$size == 128)
+result$save.ratio.L3 <- sum(dm$mark == "save" & dm$E == 3 & dm$size == 128)/sum(dm$E == 3 & dm$size == 128)
+```
+
+Результаты представлены как доля сохраненных шаров для каждого из видов шаров (красный, желтый, зеленый) в каждой из попыток:
+
+```{r}
+tbl <- data.frame(red    = c(result$save.ratio.H1, result$save.ratio.H2, result$save.ratio.H3),
+                  yellow = c(result$save.ratio.M1, result$save.ratio.M2, result$save.ratio.M3),
+                  green  = c(result$save.ratio.L1, result$save.ratio.L2, result$save.ratio.L3))
+
+colnames(tbl) <- c("Красный шар","Желтый шар","Зеленый шар")
+rownames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка")
+
+tbl <- knitr::kable(tbl, align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+# Продолжительность страйков (последовательных взрывов или сохранений)
+
+```{r}
+dm <- d[,c("mark","E")]
+dm <- dm[dm$mark != "pump", ]; dm$mark <- droplevels(dm$mark)
+
+# Всего страйков взорвавшихся и сохраненных по 3 этапам
+tmp <- rle(as.character(dm$mark))
+result$seq.exploded <- mean(tmp$lengths[tmp$values == "exploded"])
+result$seq.saved    <- mean(tmp$lengths[tmp$values == "save"])
+
+# Взорвавшихся и сохраненных страйков на первом этапе
+dm1 <- dm[dm$E == 1,]
+tmp <- rle(as.character(dm1$mark))
+result$seq.exploded.E1 <- mean(tmp$lengths[tmp$values == "exploded"])
+result$seq.saved.E1    <- mean(tmp$lengths[tmp$values == "save"])
+
+# Взорвавшихся и сохраненных страйков на втором этапе
+dm2 <- dm[dm$E == 2,]
+tmp <- rle(as.character(dm2$mark))
+result$seq.exploded.E2 <- mean(tmp$lengths[tmp$values == "exploded"])
+result$seq.saved.E2    <- mean(tmp$lengths[tmp$values == "save"])
+
+# Взорвавшихся и сохраненных страйков на третьем этапе
+dm3 <- dm[dm$E == 3,]
+tmp <- rle(as.character(dm3$mark))
+result$seq.exploded.E3 <- mean(tmp$lengths[tmp$values == "exploded"])
+result$seq.saved.E3    <- mean(tmp$lengths[tmp$values == "save"])
+rm(dm1, dm2, dm3, tmp)
+```
+
+Расчитывается усредненное количество страйков взорвавшихся и сохраненных шаров по 3 этапам:
+
+```{r}
+tbl <- data.frame(E1 = c(result$seq.exploded.E1, result$seq.saved.E1),
+                  E2 = c(result$seq.exploded.E2, result$seq.saved.E2),
+                  E3 = c(result$seq.exploded.E3, result$seq.saved.E3),
+                  E  = c(result$seq.exploded,    result$seq.saved))
+
+colnames(tbl) <- c("Первая попытка","Вторая попытка","Третья попытка","Суммарно")
+rownames(tbl) <- c("Взорвано","Сохранено")
+
+tbl <- knitr::kable(tbl, align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+# Результаты
+
+Итоговый объект, содержащий результаты имеет следующий вид:
+
+```{r}
+tbl <- t(result)
+tbl <- cbind(names(result), tbl); rownames(tbl) <- NULL
+colnames(tbl) <- c("Показатель", "Численное значение")
+tbl <- knitr::kable(tbl, align = "c")
+kableExtra::kable_styling(tbl, "striped", full_width = T, position = "left")
+```
+
+
+Также результаты могут быть для наглядности представлены в виде радиальных диаграмм (данные предварительно логарифмированы):
+
+```{r, fig.height=15, fig.width=15}
+res = gather(result[,-c(1:2)])
+res$value.log <- log(res$value)
+ggplot(data=res,  aes(x=key, y=value.log, group = 1)) + 
+  geom_point(size=2) +
+  geom_line() +
+  xlab("") + 
+  ylab("") + 
+  coord_polar() +
+  theme(panel.grid = element_line(colour = "gray80"),
+        axis.text = element_text(size = 14, angle = 0))
+```
